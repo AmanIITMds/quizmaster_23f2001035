@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Summary</title>
+    <link rel="stylesheet" href="/static/style.css">
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
+</head>
+<body>
+    <header>
+        <nav class="navbar navbar-expand-lg bg-primary">
+            <div class="container-fluid">
+                <div class="welcome-text">
+                    Welcome, QUIZ MASTER!
+                </div>
+                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" 
+                    data-bs-target="#navbarSupportedContent" aria-controls="navbarSupportedContent"
+                    aria-expanded="false" aria-label="Toggle navigation">
+                    <span class="navbar-toggler-icon"></span>
+                </button>
+                <div class="collapse navbar-collapse" id="navbarSupportedContent">
+                    <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+                        <li class="nav-item"><a class="nav-link" href="{{ url_for('user_dashboard') }}">Home</a></li>
+                        <li class="nav-item"><a class="nav-link" href="{{ url_for('scores') }}">scores</a></li>
+                        <li class="nav-item"><a class="nav-link" href="{{url_for('user_summary') }}">Summary</a></li>
+                        <li class="nav-item"><a class="nav-link" href="{{ url_for('index') }}">Logout</a></li>
+                    </ul>
+                    <form class="d-flex" role="search">
+                        <input class="form-control me-2" type="search" placeholder="Search">
+                        <button class="btn btn-outline-light" type="submit">Search</button>
+                    </form>
+                </div>
+            </div>
+        </nav>
+    </header>
+    {% if error %}
+        <h4 style="color: red; text-align: center;">Error: {{ error }}</h4>
+    {% else %}
+    <div style="text-align: center; margin-top: 8px;">
+        <h3 class="text-center">Admin Summary - Quiz Master</h3>
+        <div style="margin-top: 20px;">
+            <div style="display: inline-block; width: 45%;">
+                <img src="{{ url_for('static', filename='pie_chart_attempts.png') }}" alt="Quiz Attempts Pie Chart" style="width: 100%; height: auto;">
+            </div>
+            <div style="display: inline-block; width: 45%;">
+                <img src="{{ url_for('static', filename='bar_chart_scores.png') }}" alt="Top Scores Bar Chart" style="width: 100%; height: auto;">
+            </div>
+        </div>
+    </div>    
+    {% endif %}
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

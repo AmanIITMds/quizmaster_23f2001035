@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quiz Scores</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+    <link rel = "stylesheet" href="/static/style.css">
+</head>
+<body>
+    <header>
+        <nav class="navbar navbar-expand-lg bg-light">
+            <div class="container-fluid">
+                <div class="welcome-text">
+                    Welcome, {{ session['fullname'] }}!
+                </div>
+                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" 
+                    data-bs-target="#navbarSupportedContent" aria-controls="navbarSupportedContent"
+                    aria-expanded="false" aria-label="Toggle navigation">
+                    <span class="navbar-toggler-icon"></span>
+                </button>
+                <div class="collapse navbar-collapse" id="navbarSupportedContent">
+                    <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+                        <li class="nav-item"><a class="nav-link" href="{{ url_for('user_dashboard') }}">Home</a></li>
+                        <li class="nav-item"><a class="nav-link" href="{{ url_for('scores') }}">Scores</a></li>
+                        <li class="nav-item"><a class="nav-link" href="{{url_for('user_summary')}}">Summary</a></li>
+                        <li class="nav-item"><a class="nav-link" href="{{ url_for('index') }}">Logout</a></li>
+                    </ul>
+                </div>
+            </div>
+        </nav>
+    </header>   
+
+    <!-- Quiz Scores Table -->
+    <div class="container mt-4">
+        <h3 class="text-center">Quiz Scores</h3>
+        
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+                        {{ message }}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                    </div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+        
+        {% if scores %}
+        <!-- Reset Scores Button -->
+        <div class="d-flex justify-content-end mb-3">
+            <form action="{{ url_for('reset_scores') }}" method="POST" onsubmit="return confirm('Are you sure you want to reset all your quiz scores? This action cannot be undone.')">
+                <button type="submit" class="btn btn-danger">Reset All Scores</button>
+            </form>
+        </div>
+
+        <table class="table table-bordered">
+            <thead class="table-dark">
+                <tr>
+                    <th>Quiz ID</th>
+                    <th>Quiz Name</th>
+                    <th>Score</th>
+                    <th>Percentage</th>
+                    <th>Date</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for data in scores %}
+                <tr>
+                    <td>{{ data.quiz.id }}</td>
+                    <td>{{ data.quiz.name }}</td>
+                    <td>{{ data.score.score }} out of {{ data.question_count }}</td>
+                    <td>{{ data.percentage }}%</td>
+                    <td>{{ data.score.timestamp }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% else %}
+        <div class="alert alert-info text-center">
+            No scores available yet. Complete a quiz to see your results!
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
