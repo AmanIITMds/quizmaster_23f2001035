@@ -39,11 +39,11 @@ It is a multi-user app (one requires an administrator and other users) that acts
 3. **Analytics**:
    - Summary charts for performance tracking.
 ## Technologies Used
-  - Flask framework was used for developing the application.
-  - Jinja2 was used for templating and HTML generation. 
-  - Bootstrap 5 was used for styling and designing purpose. 
-  - Flask-SQLAlchemy and sqlite3 were used for database operations.
-  - Matplotlib is used for generating the the admin_summary and user_summary.
+  - Flask framework - for development of the application.
+  - Jinja2- for dynamic templating and HTML generation. 
+  - Bootstrap- for styling and designing purpose. 
+  - Flask-SQLAlchemy and sqlite3- for database operations.
+  - Matplotlib - for generating the the admin_summary and user_summary.
 
 ## DB schema:
 ![db_schema](https://github.com/user-attachments/assets/67833c04-21f2-4f9b-b4a8-6cb364cbaa5f)   
