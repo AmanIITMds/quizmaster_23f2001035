@@ -3,11 +3,7 @@ from flask_sqlalchemy import SQLAlchemy
 from flask_migrate import Migrate 
 import os
 import matplotlib.pyplot as plt
-import io
-import base64
-import traceback 
 from werkzeug.security import generate_password_hash, check_password_hash
-from sqlalchemy.sql import func
 
 app = Flask(__name__)
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///quiz_master.sqlite3'
