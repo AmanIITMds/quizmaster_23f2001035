@@ -1,6 +1,7 @@
 from flask import Flask, render_template, request, redirect, url_for, session, flash
 from flask_sqlalchemy import SQLAlchemy
 from flask_migrate import Migrate 
+import os
 import matplotlib.pyplot as plt
 import io
 import base64
@@ -15,7 +16,7 @@ app.config['SECRET_KEY'] = 'secret_key_here'
 db = SQLAlchemy(app)
 migrate= Migrate (app,db)
 
-
+#----------------------------models-----------------------------------------
 class User(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     email = db.Column(db.String(100), unique=True, nullable=False)
@@ -86,6 +87,7 @@ def add_header(response):
     response.headers["Expires"] = "0"
     return response
 
+#--------------------login and register endpoints---------------------------
 @app.route('/')
 def index():
     return render_template('index.html')
@@ -149,6 +151,7 @@ def adminlogin():
         flash('Invalid Admin Credentials!', 'danger')
     return render_template('adminlogin.html')
 
+#-----------------------------admin,dashboard, user dashboard------------------------------
 @app.route('/admin_dashboard', methods=['GET', 'POST'])
 def admin_dashboard():
     if 'admin' not in session:
@@ -190,6 +193,17 @@ def admin_dashboard():
         chapter_question_counts=chapter_question_counts
     )
 
+@app.route('/user_dashboard')
+def user_dashboard():
+    quizzes = Quiz.query.all()
+
+    # Add question count as an attribute of Quiz objects
+    for quiz in quizzes:
+        quiz.question_count = Question.query.filter_by(quiz_id=quiz.id).count()
+
+    return render_template('user_dashboard.html', quizzes=quizzes)
+
+#------------------------search button for admin part---------------------------------
 @app.route('/search', methods=['GET', 'POST'])
 def search():
     query = request.args.get('query')  # Get the search query from the URL parameters
@@ -214,7 +228,7 @@ def search():
         return redirect(url_for('admin_dashboard'))  # Redirect to home if no query is provided
 
 
-
+#-------------------------------------quiz,subject and chapter endpoints----------------------------------------
 
 @app.route('/quizmanagement')
 def quizmanagement():
@@ -231,17 +245,6 @@ def quizmanagement():
                            all_chapters=chapters, 
                            all_quizzes=quizzes,
                            questions=questions)
-
-@app.route('/user_dashboard')
-def user_dashboard():
-    quizzes = Quiz.query.all()
-
-    # Add question count as an attribute of Quiz objects
-    for quiz in quizzes:
-        quiz.question_count = Question.query.filter_by(quiz_id=quiz.id).count()
-
-    return render_template('user_dashboard.html', quizzes=quizzes)
-
 
 
 
@@ -531,6 +534,43 @@ def delete_quiz(quiz_id):
     return redirect(url_for('quizmanagement'))
 
 
+@app.route('/submit_quiz', methods=['POST'])
+def submit_quiz():
+    user_id = session['user_id']
+    quiz_id = request.form['quiz_id']  # Assuming quiz_id is passed in the form
+    quiz = Quiz.query.get(quiz_id)
+    correct_answers = 0
+
+    # Assuming questions are submitted with their IDs and selected options
+    for question_id, selected_option in request.form.items():
+        if question_id.startswith('question_'):
+            question_id = int(question_id.replace('question_', ''))
+            question = Question.query.get(question_id)
+            if question.correct_option == int(selected_option):
+                correct_answers += 1
+
+    # Add timestamp to the score
+    import datetime
+    current_time = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    
+    # Check if a score already exists for this user and quiz
+    existing_score = Score.query.filter_by(user_id=user_id, quiz_id=quiz_id).first()
+    if existing_score:
+        # Update existing score if it's higher
+        if correct_answers > existing_score.score:
+            existing_score.score = correct_answers
+            existing_score.timestamp = current_time
+            db.session.commit()
+    else:
+        # Create new score record
+        score = Score(user_id=user_id, quiz_id=quiz_id, score=correct_answers, timestamp=current_time)
+        db.session.add(score)
+        db.session.commit()
+
+    flash(f"Quiz submitted successfully! Your score: {correct_answers}", "success")
+    return redirect(url_for('scores'))
+
+#---------------------------------------------question endpoints(add/delete/edit)-----------------------------------
 @app.route('/add_question', methods=['POST'])
 def add_question():
     question_text = request.form['questionTitle']
@@ -590,42 +630,7 @@ def edit_question(question_id):
 
     return redirect(request.referrer)  # Redirect back to the same page
 
-@app.route('/submit_quiz', methods=['POST'])
-def submit_quiz():
-    user_id = session['user_id']
-    quiz_id = request.form['quiz_id']  # Assuming quiz_id is passed in the form
-    quiz = Quiz.query.get(quiz_id)
-    correct_answers = 0
-
-    # Assuming questions are submitted with their IDs and selected options
-    for question_id, selected_option in request.form.items():
-        if question_id.startswith('question_'):
-            question_id = int(question_id.replace('question_', ''))
-            question = Question.query.get(question_id)
-            if question.correct_option == int(selected_option):
-                correct_answers += 1
-
-    # Add timestamp to the score
-    import datetime
-    current_time = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-    
-    # Check if a score already exists for this user and quiz
-    existing_score = Score.query.filter_by(user_id=user_id, quiz_id=quiz_id).first()
-    if existing_score:
-        # Update existing score if it's higher
-        if correct_answers > existing_score.score:
-            existing_score.score = correct_answers
-            existing_score.timestamp = current_time
-            db.session.commit()
-    else:
-        # Create new score record
-        score = Score(user_id=user_id, quiz_id=quiz_id, score=correct_answers, timestamp=current_time)
-        db.session.add(score)
-        db.session.commit()
-
-    flash(f"Quiz submitted successfully! Your score: {correct_answers}", "success")
-    return redirect(url_for('scores'))
-
+#-----------------------------------------------scores endpoints-----------------------------------------------------
 @app.route('/scores')
 def scores():
     if 'user_id' not in session:
@@ -654,10 +659,31 @@ def scores():
 
     return render_template('scores.html', scores=score_data)
 
+@app.route('/reset_scores', methods=['POST'])
+def reset_scores():
+    if 'user_id' not in session:
+        return redirect(url_for('userlogin'))
+    
+    user_id = session['user_id']
+    
+    try:
+        # Delete all UserAnswer entries for this user
+        UserAnswer.query.filter(UserAnswer.quiz_id.in_(
+            db.session.query(Score.quiz_id).filter_by(user_id=user_id)
+        )).delete(synchronize_session=False)
+        
+        # Delete all scores for this user
+        Score.query.filter_by(user_id=user_id).delete()
+        
+        db.session.commit()
+        flash("All your quiz scores have been reset successfully!", "success")
+    except Exception as e:
+        db.session.rollback()
+        flash(f"Error resetting scores: {str(e)}", "danger")
+    
+    return redirect(url_for('scores'))
 
-import os
-import matplotlib.pyplot as plt
-
+#---------------------------------------------------------summary endpoints------------------------------------------
 @app.route('/admin_summary')
 def admin_summary():
     try:
@@ -726,30 +752,6 @@ def admin_summary():
 
 
 
-@app.route('/reset_scores', methods=['POST'])
-def reset_scores():
-    if 'user_id' not in session:
-        return redirect(url_for('userlogin'))
-    
-    user_id = session['user_id']
-    
-    try:
-        # Delete all UserAnswer entries for this user
-        UserAnswer.query.filter(UserAnswer.quiz_id.in_(
-            db.session.query(Score.quiz_id).filter_by(user_id=user_id)
-        )).delete(synchronize_session=False)
-        
-        # Delete all scores for this user
-        Score.query.filter_by(user_id=user_id).delete()
-        
-        db.session.commit()
-        flash("All your quiz scores have been reset successfully!", "success")
-    except Exception as e:
-        db.session.rollback()
-        flash(f"Error resetting scores: {str(e)}", "danger")
-    
-    return redirect(url_for('scores'))
-
 @app.route("/user_summary")
 def user_summary():
     if "user_id" not in session:
@@ -791,6 +793,10 @@ def user_summary():
     plt.close()
 
     return render_template("user_summary.html", chart_url=url_for("static", filename="user_summary_chart.png"))
+
+
+#----------------------------------------------------logout endpoint---------------------------------------------------------
+
 
 @app.route('/logout')
 def logout():
