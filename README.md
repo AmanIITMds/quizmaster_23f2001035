@@ -38,10 +38,33 @@ It is a multi-user app (one requires an administrator and other users) that acts
    - Record scores for every quiz attempt.
 3. **Analytics**:
    - Summary charts for performance tracking.
-##Technologies Used
+## Technologies Used
   - Flask framework was used for developing the application.
   - Jinja2 was used for templating and HTML generation. 
   - Bootstrap 5 was used for styling and designing purpose. 
   - Flask-SQLAlchemy and sqlite3 were used for database operations.
   - Matplotlib is used for generating the the admin_summary and user_summary.
-   
+
+## DB schema:
+![db_schema](https://github.com/user-attachments/assets/67833c04-21f2-4f9b-b4a8-6cb364cbaa5f)   
+
+## WIREFRAME :
+![Home](https://github.com/user-attachments/assets/f5d8c6ab-e8b5-4f11-8d2f-f4596008ddfa)
+
+![Adminlogin](https://github.com/user-attachments/assets/9c721a83-84b0-4036-a769-758e5f0d24e5)
+
+![Userlogin](https://github.com/user-attachments/assets/1effa3f9-197f-4fbb-9b90-ef0be9c3c563)
+
+![Register](https://github.com/user-attachments/assets/6fedaa20-f0fa-4d66-ac5b-9b9e0a3094e3)
+
+![Admin_dashboard](https://github.com/user-attachments/assets/10c40993-092e-4caf-82fa-5011f75d0eaf)
+
+![Admin_summary](https://github.com/user-attachments/assets/8c624463-aea8-4436-b0a9-fee3011002ce)
+
+![quizmanagement](https://github.com/user-attachments/assets/216e5cf0-2958-4d71-8607-44d44c7543ad)
+
+![scores](https://github.com/user-attachments/assets/5870281d-73be-4271-9fdd-524088a0d60d)
+
+![user_summary](https://github.com/user-attachments/assets/cf9f81f2-dacb-4c19-b872-c1757535c92d)
+
+![userdashboard](https://github.com/user-attachments/assets/9b48ff71-1bfa-4b23-b23b-e5b158b26e87)
