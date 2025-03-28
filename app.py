@@ -45,8 +45,6 @@ class Quiz(db.Model):
     duration = db.Column(db.String(10), nullable=False)
     chapter = db.relationship('Chapter', back_populates='quizzes')
     questions = db.relationship('Question', back_populates='quiz', lazy=True)  
-    # Access subject through chapter
-    # subject = db.relationship('Subject', secondary='chapter', viewonly=True)  # Not needed here
 
 class Question(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -112,14 +110,14 @@ def register():
             flash("Email already registered!", "danger")
             return redirect(url_for('register'))
 
-        # Save user to database
-        hashed_password = generate_password_hash(password)  # Hash password
+
+        hashed_password = generate_password_hash(password) 
         new_user = User(email=email, password=hashed_password, full_name=full_name, dob=dob, qualification=qualification)
         db.session.add(new_user)
         db.session.commit()
 
         flash("Registration successful! Please log in.", "success")
-        return redirect(url_for('userlogin'))  # Redirect after successful registration
+        return redirect(url_for('userlogin'))  
 
     return render_template('register.html')
 
@@ -133,7 +131,7 @@ def userlogin():
         if user and check_password_hash(user.password, password):
             session['user_id'] = user.id
             session['email'] = user.email
-            session['fullname'] = user.full_name  # Add full name to session
+            session['fullname'] = user.full_name  
             flash("Login successful!", "success")
             return redirect(url_for('user_dashboard'))
         else:
@@ -197,7 +195,7 @@ def admin_dashboard():
 def user_dashboard():
     quizzes = Quiz.query.all()
 
-    # Add question count as an attribute of Quiz objects
+
     for quiz in quizzes:
         quiz.question_count = Question.query.filter_by(quiz_id=quiz.id).count()
 
@@ -225,7 +223,7 @@ def search():
             users=users
         )
     else:
-        return redirect(url_for('admin_dashboard'))  # Redirect to home if no query is provided
+        return redirect(url_for('admin_dashboard')) 
 
 
 #-------------------------------------quiz,subject and chapter endpoints----------------------------------------
@@ -255,9 +253,9 @@ def add_subject():
 
     if not subject_name:
         flash('Please enter a subject name', 'danger')
-        return redirect(url_for('admin_dashboard'))  # Stop execution if no subject name
+        return redirect(url_for('admin_dashboard'))  
 
-    # Check if the subject already exists **before adding**
+    # Check if the subject already exists before adding
     existing_subject = Subject.query.filter_by(name=subject_name).first()
     if existing_subject:
         flash(f'Subject "{subject_name}" already exists!', 'danger')
@@ -269,7 +267,7 @@ def add_subject():
     db.session.commit()
     flash('Subject added successfully!', 'success')
 
-    return redirect(url_for('admin_dashboard'))  # Final return statement
+    return redirect(url_for('admin_dashboard'))  
 
 
 @app.route('/delete_subject/<int:subject_id>', methods=['POST'])
@@ -345,8 +343,8 @@ def delete_chapter(chapter_id):
         return redirect(url_for('quizmanagement'))
 
     try:
-        # Assign all quizzes to a default chapter before deleting
-        default_chapter_id = 1  # Change this to the ID of your default chapter
+        
+        default_chapter_id = 1  
         Quiz.query.filter_by(chapter_id=chapter_id).update({"chapter_id": default_chapter_id})
 
         db.session.delete(chapter)
@@ -411,7 +409,6 @@ def start_quiz(quiz_id, q_no):
     
     # If no more questions, go to summary
     if q_no > total_questions:
-        # Calculate and save score before redirecting
         calculate_score(quiz_id)
         return redirect(url_for('scores'))
 
@@ -448,7 +445,7 @@ def start_quiz(quiz_id, q_no):
                            total_questions=total_questions, 
                            duration=10)
 
-# Helper function to calculate and save score
+
 def calculate_score(quiz_id):
     if 'user_id' not in session:
         return
@@ -537,7 +534,7 @@ def delete_quiz(quiz_id):
 @app.route('/submit_quiz', methods=['POST'])
 def submit_quiz():
     user_id = session['user_id']
-    quiz_id = request.form['quiz_id']  # Assuming quiz_id is passed in the form
+    quiz_id = request.form['quiz_id']  
     quiz = Quiz.query.get(quiz_id)
     correct_answers = 0
 
@@ -549,7 +546,6 @@ def submit_quiz():
             if question.correct_option == int(selected_option):
                 correct_answers += 1
 
-    # Add timestamp to the score
     import datetime
     current_time = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     
@@ -580,11 +576,11 @@ def add_question():
     option4 = request.form['option4']
     correct_option = int(request.form['correctOption'])
     quiz_id = int(request.form['quiz_id'])
-    chapter_id = request.form.get('chapter_id')  # Get chapter_id from the form
+    chapter_id = request.form.get('chapter_id')  # Get chapterid from the form
     
     # Ensure chapter_id is not None
     if not chapter_id:
-        chapter_id = 1  # Set a default value (change as needed)
+        chapter_id = 1  # default value
     else:
         chapter_id = int(chapter_id)
 
@@ -596,7 +592,7 @@ def add_question():
         option4=option4,
         correct_option=correct_option,
         quiz_id=quiz_id,
-        chapter_id=chapter_id  # Include chapter_id
+        chapter_id=chapter_id  # Include chapterid
     )
 
     db.session.add(new_question)
@@ -628,7 +624,7 @@ def edit_question(question_id):
         db.session.commit()
         flash("Question updated successfully!", "success")
 
-    return redirect(request.referrer)  # Redirect back to the same page
+    return redirect(request.referrer)  
 
 #-----------------------------------------------scores endpoints-----------------------------------------------------
 @app.route('/scores')
@@ -637,15 +633,13 @@ def scores():
         return redirect(url_for('userlogin')) 
 
     user_id = session['user_id']
-    
-    # Fetch fresh scores from the database
     user_scores = db.session.query(Score, Quiz)\
         .join(Quiz)\
         .filter(Score.user_id == user_id)\
         .order_by(Score.timestamp.desc())\
         .all()
     
-    # Prepare data for template
+    # data for template
     score_data = []
     for score, quiz in user_scores:
         question_count = Question.query.filter_by(quiz_id=quiz.id).count()
@@ -672,7 +666,7 @@ def reset_scores():
             db.session.query(Score.quiz_id).filter_by(user_id=user_id)
         )).delete(synchronize_session=False)
         
-        # Delete all scores for this user
+        # Delete all score
         Score.query.filter_by(user_id=user_id).delete()
         
         db.session.commit()
@@ -691,7 +685,7 @@ def admin_summary():
         if not os.path.exists("static"):
             os.makedirs("static")
         
-        print("✅ Static directory checked or created.")  # Debugging print
+        print("✅ Static directory checked or created.")  
 
         # **Pie Chart Data**
         subjects = Subject.query.all()
@@ -702,7 +696,7 @@ def admin_summary():
             quizzes = Quiz.query.join(Chapter).filter(Chapter.subject_id == subject.id).all()
             attempts = sum(db.session.query(Score).filter(Score.quiz_id == quiz.id).count() for quiz in quizzes)
 
-            print(f"📊 Subject: {subject.name}, Attempts: {attempts}")  # Debugging print
+            print(f"📊 Subject: {subject.name}, Attempts: {attempts}")  
 
             if attempts > 0:
                 subject_names.append(subject.name)
@@ -714,11 +708,11 @@ def admin_summary():
             plt.title("Quiz Attempts by Subject")
             plt.savefig('static/pie_chart_attempts.png')
             plt.close()
-            print("✅ Pie chart saved!")  # Debugging print
+            print("✅ Pie chart saved!")  
         else:
-            print("⚠️ No data for pie chart!")  # Debugging print
+            print("⚠️ No data for pie chart!")  
 
-        # **Bar Chart Data**
+        # Bar Chart Data
         subject_scores = {}
 
         for subject in subjects:
@@ -739,14 +733,14 @@ def admin_summary():
             plt.xticks(rotation=45)
             plt.savefig('static/bar_chart_scores.png')
             plt.close()
-            print("✅ Bar chart saved!")  # Debugging print
+            print("✅ Bar chart saved!")  
         else:
-            print("⚠️ No data for bar chart!")  # Debugging print
+            print("⚠️ No data for bar chart!")  
 
         return render_template('admin_summary.html')
 
     except Exception as e:
-        print(f"❌ Error: {e}")  # Print any error in console
+        print(f"❌ Error: {e}")  
         return render_template('admin_summary.html', error=str(e))
 
 
@@ -772,7 +766,7 @@ def user_summary():
     if not scores:
         return render_template("user_summary.html", error="No quiz data available!")
 
-    # Extract chapter names and scores
+    
     chapters, scores_list = zip(*scores)
 
     # Generate bar chart
