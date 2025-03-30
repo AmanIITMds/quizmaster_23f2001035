@@ -713,7 +713,9 @@ def admin_summary():
 
         for subject in subjects:
             quizzes = Quiz.query.join(Chapter).filter(Chapter.subject_id == subject.id).all()
-            max_score = max((db.session.query(Score.score).filter(Score.quiz_id == quiz.id).scalar() or 0) for quiz in quizzes)
+            max_score = max([db.session.query(Score.score).filter(Score.quiz_id == quiz.id).scalar() or 0 for quiz in quizzes] or [0])
+
+
 
             print(f"📈 Subject: {subject.name}, Max Score: {max_score}")  # Debugging print
 

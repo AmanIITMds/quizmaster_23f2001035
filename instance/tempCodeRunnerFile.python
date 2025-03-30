@@ -1,0 +1,3 @@
+import graphviz
+import pygraphviz
+print("Graphviz and Pygraphviz installed successfully!")
